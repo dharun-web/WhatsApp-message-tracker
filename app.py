@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly as px
 import re
 from datetime import datetime
 
@@ -79,14 +78,17 @@ if uploaded_file:
         col2.metric("Successful", success, f"{success/total_messages*100:.1f}%")
         col3.metric("Failed", failed, f"{failed/total_messages*100:.1f}%", delta_color="inverse")
         
-        # Pie chart
-        fig = px.pie(
-            names=['Success', 'Failure'],
-            values=[success, failed],
-            hole=0.4,
-            color_discrete_sequence=['#4CAF50', '#F44336']
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        # Replace Plotly pie chart with Streamlit native components
+        st.subheader("Success/Failure Distribution")
+        success_rate = success/total_messages
+        st.progress(success_rate)
+        st.caption(f"Success Rate: {success_rate:.1%} | Failure Rate: {1-success_rate:.1%}")
+        
+        # Alternative visualization using bar chart
+        st.bar_chart(pd.DataFrame({
+            'Status': ['Success', 'Failure'],
+            'Count': [success, failed]
+        }).set_index('Status'))
         
         st.header("2. Detailed Failure Analysis")
         failed_messages = analyze_failures(df)
@@ -136,7 +138,7 @@ if uploaded_file:
                 mime="text/csv"
             )
             
-            # ✅ Filter by failure reason and extract contacts
+            # Filter by failure reason and extract contacts
             st.subheader("📥 Extract Contacts by Failure Reason")
 
             selected_reason = st.selectbox(
@@ -196,8 +198,8 @@ if uploaded_file:
                     use_container_width=True
                 )
                 # WhatsApp alert template
-            st.subheader("📩 WhatsApp Alert Template")
-            st.markdown("""
+                st.subheader("📩 WhatsApp Alert Template")
+                st.markdown("""
 **Subject:** Action Required: Update Your Phone Number for WhatsApp Alerts
 
 **Dear Intern,**
@@ -210,15 +212,15 @@ To continue receiving important updates and notifications, please verify or upda
 
 Thank you,  
 **Team Summer of AI 2025**
-    """)
-    
-    # Download invalid numbers CSV
-            invalid_csv = invalid_numbers.to_csv(index=False).encode('utf-8')
-            st.download_button(
-            label="📤 Download Invalid Phone Numbers",
-            data=invalid_csv,
-            file_name="invalid_numbers.csv",
-            mime="text/csv"
-            )
+                """)
+                
+                # Download invalid numbers CSV
+                invalid_csv = invalid_numbers.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📤 Download Invalid Phone Numbers",
+                    data=invalid_csv,
+                    file_name="invalid_numbers.csv",
+                    mime="text/csv"
+                )
         else:
             st.warning("Phone Number column not found in the data")
